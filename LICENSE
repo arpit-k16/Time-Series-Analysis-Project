@@ -19,10 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Data note: this repository contains only source code. The MTA Subway Hourly
-Ridership dataset it analyses is published by NYC Open Data and is not
-redistributed here. See https://data.ny.gov/ for the source data and its terms
-of use.
