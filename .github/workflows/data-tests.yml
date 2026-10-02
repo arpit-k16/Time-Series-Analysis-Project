@@ -1,0 +1,61 @@
+name: Data tests (live API)
+
+# The three verification suites talk to the live NYC Open Data endpoint and
+# build a Parquet cache from scratch, which takes roughly 10-20 minutes. That is
+# too slow and too rude to run on every push, so this workflow is manual.
+#
+# Run it from the Actions tab -> "Data tests (live API)" -> Run workflow.
+# Use the `suite` input to run only one of them while iterating locally.
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Which suite to run
+        type: choice
+        default: all
+        options: [all, verify, filters, windows]
+
+permissions:
+  contents: read
+
+# One data-test run at a time, so concurrent jobs do not compete for API quota.
+concurrency:
+  group: data-tests
+  cancel-in-progress: false
+
+jobs:
+  data-tests:
+    name: ${{ inputs.suite == 'all' && 'All suites' || format('{0} suite', inputs.suite) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run verify.py
+        if: inputs.suite == 'all' || inputs.suite == 'verify'
+        run: python -u verify.py
+
+      - name: Run verify_filters.py
+        if: inputs.suite == 'all' || inputs.suite == 'filters'
+        run: python -u verify_filters.py
+
+      - name: Run check_windows.py
+        if: inputs.suite == 'all' || inputs.suite == 'windows'
+        run: python -u check_windows.py
+
+      - name: Upload generated cache for debugging
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aggregate-cache-on-failure
+          path: data/processed/
+          retention-days: 3
+          if-no-files-found: ignore

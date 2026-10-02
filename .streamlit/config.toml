@@ -1,0 +1,23 @@
+# Theme configuration
+#
+# IMPORTANT: backgroundColor / secondaryBackgroundColor / textColor are
+# deliberately NOT pinned at the top level. Pinning them overrides Streamlit's
+# built-in light/dark presets, so the in-app Dark mode switch could re-colour
+# the dashboard's own text while leaving the app shell white.
+#
+# primaryColor is the one pinned value - a mid-tone blue that stays legible
+# against both the light and the dark surface. sidebar.textColor is set purely
+# because leaving it blank makes the frontend log
+# "Invalid color passed for textColor in theme.sidebar" on every render; the
+# app's own CSS overrides it in dark mode anyway.
+
+[theme]
+base = "light"
+primaryColor = "#4C7DB8"
+
+[theme.sidebar]
+textColor = "#1F2937"
+
+[server]
+headless = true
+runOnSave = true

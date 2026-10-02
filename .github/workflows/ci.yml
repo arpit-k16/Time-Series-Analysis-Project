@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Compile and smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Byte-compile every module
+        run: >-
+          python -m compileall -q
+          app.py utils
+          verify.py verify_filters.py check_windows.py
+          scripts/build_cache.py
+
+      # main() is guarded by __name__ == "__main__" and no module-level code
+      # touches the network, so this proves the imports resolve offline.
+      - name: Import smoke test
+        run: python -c "import app, utils; print('import ok')"
+
+      - name: Phase 1 scope guard - no forecasting
+        # Phase 1 is descriptive only. The patterns below target actual call
+        # sites and import names rather than the word "forecast", so the
+        # existing prose ("out of scope for this phase", build_forecast_table)
+        # does not trip them. Naming a banned library anywhere in .py is itself
+        # treated as a failure, which keeps the constraint unambiguous.
+        run: |
+          set -euo pipefail
+          fail=0
+          if grep -rnE '\b(arima|prophet|xgboost|keras)\b' --include='*.py' \
+               app.py utils scripts; then
+            echo "::error::a forecasting library is referenced"
+            fail=1
+          fi
+          if grep -rnE '\b(lstm|gru)\(' --include='*.py' app.py utils scripts; then
+            echo "::error::an LSTM/GRU layer is being constructed"
+            fail=1
+          fi
+          if grep -rnE '\b(train_test_split|mean_absolute_error|mean_squared_error)\b' \
+               --include='*.py' app.py utils scripts; then
+            echo "::error::a model-evaluation metric or split is referenced"
+            fail=1
+          fi
+          if grep -rniE '\b(bengaluru|namma ?metro)\b' --include='*.py' \
+               --include='*.md' . ; then
+            echo "::error::a stale project reference remains"
+            fail=1
+          fi
+          if [ "$fail" -ne 0 ]; then
+            echo "Phase 1 scope violated - see README section 1."
+            exit 1
+          fi
+          echo "Scope guard passed"
+
+      - name: No credentials committed
+        run: |
+          set -euo pipefail
+          if git ls-files | grep -E '\.env$|secrets\.toml$|id_rsa|\.pem$'; then
+            echo "::error::a credential-shaped file is tracked"
+            exit 1
+          fi
+          echo "No credential files tracked"
+
+      - name: Repository size guard
+        run: |
+          set -euo pipefail
+          # The Parquet cache is generated output; it must stay out of history.
+          if git ls-files | grep -E '\.parquet$|^data/processed/'; then
+            echo "::error::generated cache is tracked - it belongs in .gitignore"
+            exit 1
+          fi
+          echo "No generated cache tracked"

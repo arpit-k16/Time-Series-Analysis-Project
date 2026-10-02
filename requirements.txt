@@ -1,0 +1,6 @@
+streamlit>=1.43
+pandas>=2.1
+numpy>=1.24
+plotly>=5.18
+# Parquet engine for the local aggregate cache under data/processed/.
+pyarrow>=14.0

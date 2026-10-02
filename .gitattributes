@@ -1,0 +1,21 @@
+# Normalise line endings: store LF in the repository, let each platform check
+# out its native convention. Without this, Windows clones report every file as
+# modified and diffs fill with carriage-return noise.
+* text=auto
+
+# Generated data and images are binary - never diff or line-ending-normalise
+# them. (The aggregate cache is gitignored, but keep the rule for safety.)
+*.parquet binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+
+# Documentation is Markdown; keep it plain text.
+*.md text
+
+# Config that must stay exactly as written.
+.gitattributes text eol=lf
+.gitignore text eol=lf
