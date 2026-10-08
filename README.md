@@ -23,6 +23,7 @@ dataset (NYC Open Data / Socrata view `wujg-7c2s`).
 
 **Contents** — [Quick start](#2-quick-start) · [How the data is loaded](#4-how-the-data-is-loaded)
 · [Aggregation rules](#5-how-ridership-is-aggregated-and-not-double-counted)
+· [**Preprocessing pipeline, stage by stage**](PREPROCESSING.md)
 · [Verification](#verification-scripts) · [Limitations](#11-limitations-and-assumptions)
 
 ---
@@ -90,6 +91,9 @@ verify_filters.py          filter, drill-down and error-handling suite
 check_windows.py           window-to-grain rule and lossless-resampling suite
 .github/workflows/         ci.yml (offline, every push) + data-tests.yml (live API)
 ```
+
+For a **stage-by-stage walkthrough of every preprocessing step**, naming the
+file, function and reason for each, see [**PREPROCESSING.md**](PREPROCESSING.md).
 
 `data/processed/` is **generated output, not source**. It is excluded from git
 and rebuilt with `python scripts/build_cache.py`, so a fresh clone stays small
@@ -186,6 +190,12 @@ subway / OMNY filter.
 
 Chunks cover disjoint date ranges, so they are **summed by key** — never
 deduplicated — when concatenated.
+
+> The full pipeline — filter construction, SoQL shapes, chunk combination,
+> caching, calendar derivation, grain selection, resampling, down-sampling and
+> the descriptive analytics — is documented step by step in
+> [**PREPROCESSING.md**](PREPROCESSING.md), naming the file and function behind
+> each stage.
 
 ---
 
